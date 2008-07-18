@@ -1,12 +1,12 @@
 (load-library "base64")
 (defvar wassr-mode-map nil "Local keymap for wassr-mode buffers.")
-
+ 
 (defun byte-length (s)
   (let ((fun #'(lambda (lis) 
                  (if (null lis) 
                    0
                    (let ((n (string-to-char (car lis))))
-                     (display-message-or-buffer (format "char(%c)=%d" n n))
+                     ; (display-message-or-buffer (format "char(%c)=%d" n n))
                      (+ (cond ((>= n #x1000000) 4)
                               ((>= n #x10000) 3)
                               ((>= n #x100) 2)
@@ -28,8 +28,9 @@
     (process-send-string conn (concat "Authorization: Basic " credential "\r\n"))
     (process-send-string conn "\r\n")
     ))
-
+ 
 (defun wassr-post (credential unibytes)
+  ; (display-message-or-buffer (concat "post data=" unibytes))
   (let ((conn (open-network-stream "wassr" "*wassr*" "api.wassr.jp" 80))
 ;  (let ((conn (open-network-stream "wassr" "*wassr*" "localhost" 1033))
         )
@@ -48,7 +49,7 @@
     (process-send-string conn "\r\n")
     (process-send-string conn unibytes)
     ))
-
+ 
 (if wassr-mode-map
     nil
   (let ((map (make-keymap)))
@@ -56,11 +57,11 @@
     (define-key map "\C-l" 'wassr-friend-timeline)
     (define-key map "\C-s" 'wassr-update-status)
     (setq wassr-mode-map map)))
-
+ 
 (defun wassr-advertise ()
   (get-buffer-create "*wassr*")
 )
-
+ 
 (defun wassr-mode ()
   "Mode for post status to Wassr."
    (kill-all-local-variables)
@@ -77,19 +78,19 @@
    (set (make-local-variable 'unsafe-string)
         (split-string " ;/?:@&=+$<>#%\"," ""))
    (run-hooks 'wassr-mode-hook))
-
+ 
 (defun url-encode (unibytes)
-  (let ((fun #'(lambda (c lis) (if (null lis)
-                                   nil
-                                 (if (equal c (car lis))
-                                     c
-                                   (funcall fun c (cdr lis))))))
+  (let ((fun #'(lambda (c lis) (cond ((null lis) nil)
+                                     ((equal "" (car lis)) nil)
+                                     ((equal c (car lis)) c)
+                                     (t (funcall fun c (cdr lis))))))
         (unsafe-p #'(lambda (c)
                       (funcall fun c unsafe-string)))
         )
-    (mapconcat '(lambda (c) (if (funcall unsafe-p c)
-                                (format "%%%02X" (string-to-char c))
-                              c))
+    (mapconcat '(lambda (c) (cond ((funcall unsafe-p c)
+                                   (format "%%%02X" (string-to-char c)))
+                                  ((equal "" c) "")
+                                  (t c)))
                (split-string unibytes "") ""))
 )
 (defun wassr-friend-timeline ()
