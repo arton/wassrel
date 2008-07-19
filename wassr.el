@@ -63,22 +63,25 @@
 )
  
 (defun wassr-mode ()
-  "Mode for post status to Wassr."
-   (kill-all-local-variables)
-   (wassr-advertise)
-   (set-buffer "*wassr*")
-   (use-local-map wassr-mode-map)
-   (setq major-mode 'wassr-mode
-         mode-name "Wassr"
-         buffer-read-only t)
-   (set (make-local-variable 'wassr-credential)
-        (let ((user (read-from-minibuffer "user-id: "))
-              (pass (read-passwd "password: ")))
-          (base64-encode-string (concat user ":" pass))))
-   (set (make-local-variable 'unsafe-string)
-        (remove "" (split-string " ;/?:@&=+$<>#%\"," "")))
-   (run-hooks 'wassr-mode-hook))
- 
+  "Major mode for post status to Wassr."
+  (interactive)
+  (wassr-advertise)
+  (with-current-buffer "*wassr*"
+    (kill-all-local-variables)
+    (use-local-map wassr-mode-map)
+    (setq major-mode 'wassr-mode
+          mode-name "Wassr"
+          buffer-read-only t)
+    (set (make-local-variable 'wassr-credential)
+         (let ((user (read-from-minibuffer "user-id: "))
+               (pass (read-passwd "password: ")))
+           (base64-encode-string (concat user ":" pass))))
+    (set (make-local-variable 'unsafe-string)
+         (remove "" (split-string " ;/?:@&=+$<>#%\"," "")))
+    (wassr-friend-timeline))
+  (switch-to-buffer "*wassr*")
+  (run-hooks 'wassr-mode-hook))
+
 (defun url-encode (unibytes)
   (let ((fun #'(lambda (c lis) (cond ((null lis) nil)
                                      ((equal c (car lis)) c)
